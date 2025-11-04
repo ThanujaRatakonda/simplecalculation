@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "smartcalc"
+        IMAGE_NAME = "simplecalculation"
         HARBOR_URL = "10.131.103.92:8090"
         HARBOR_PROJECT = "simplecalculation"
         FULL_IMAGE = "${HARBOR_URL}/${HARBOR_PROJECT}/${IMAGE_NAME}:latest"
@@ -23,9 +23,10 @@ pipeline {
 
         stage('Trivy Scan') {
             steps {
-                sh 'trivy image ${IMAGE_NAME} --format json --output trivy-report.json'
-                // Optional: convert to JUnit XML if you have a script
-                // sh 'python3 trivy_to_junit.py trivy-report.json > trivy-report.xml'
+                sh 'trivy image ${IMAGE_NAME} --format table --output trivy-report.txt'
+                sh 'echo "<html><body><pre>" > trivy-report.html'
+                sh 'cat trivy-report.txt >> trivy-report.html'
+                sh 'echo "</pre></body></html>" >> trivy-report.html'
             }
         }
 
@@ -41,9 +42,11 @@ pipeline {
 
         stage('Publish Trivy Results') {
             steps {
-                // If you have converted to JUnit XML
-                // junit 'trivy-report.xml'
-                echo 'Trivy results published (manual review needed if not converted to JUnit)'
+                publishHTML(target: [
+                    reportDir: '.',
+                    reportFiles: 'trivy-report.html',
+                    reportName: 'Trivy Vulnerability Report'
+                ])
             }
         }
     }
