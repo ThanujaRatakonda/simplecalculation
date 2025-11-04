@@ -40,12 +40,15 @@ pipeline {
             }
         }
 
-        stage('Publish Trivy Results') {
-            steps {
-                publishHTML(target: [
-                    reportDir: '.',
-                    reportFiles: 'trivy-report.html',
-                    reportName: 'Trivy Vulnerability Report'
+        
+stage('Publish Trivy Results') {
+    steps {
+        script {
+            publishHTML(target: [
+                reportDir: '.',
+                reportFiles: 'trivy-report.html',
+                reportName: 'Trivy Vulnerability Report'
+
                 ])
             }
         }
