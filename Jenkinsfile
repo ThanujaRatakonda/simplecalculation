@@ -3,9 +3,10 @@ pipeline {
 
     environment {
         IMAGE_NAME = "smartcalc"
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
         HARBOR_URL = "10.131.103.92:8090"
         HARBOR_PROJECT = "simplecalculation"
-        FULL_IMAGE = "${HARBOR_URL}/${HARBOR_PROJECT}/${IMAGE_NAME}:latest"
+        FULL_IMAGE = "${HARBOR_URL}/${HARBOR_PROJECT}/${IMAGE_NAME}:${IMAGE_TAG}"
     }
 
     stages {
@@ -17,16 +18,17 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t ${IMAGE_NAME} .'
+                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
             }
         }
 
         stage('Trivy Scan') {
             steps {
                 sh """
-                    trivy image ${IMAGE_NAME} \
+                    trivy image ${IMAGE_NAME}:${IMAGE_TAG} \
+                    --severity CRITICAL,HIGH \
                     --format table \
-                    --output trivy-report.txt || echo 'Trivy scan failed'
+                    --output trivy-report.txt
                 """
                 archiveArtifacts artifacts: 'trivy-report.txt', fingerprint: true
             }
@@ -35,10 +37,16 @@ pipeline {
         stage('Push to Harbor') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'harbor-creds', usernameVariable: 'HARBOR_USER', passwordVariable: 'HARBOR_PASS')]) {
-                    sh 'docker login ${HARBOR_URL} -u $HARBOR_USER -p $HARBOR_PASS'
-                    sh 'docker tag ${IMAGE_NAME} ${FULL_IMAGE}'
-                    sh 'docker push ${FULL_IMAGE}'
+                    sh "echo \$HARBOR_PASS | docker login ${HARBOR_URL} -u \$HARBOR_USER --password-stdin"
+                    sh "docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${FULL_IMAGE}"
+                    sh "docker push ${FULL_IMAGE}"
                 }
+            }
+        }
+
+        stage('Cleanup') {
+            steps {
+                sh "docker rmi ${IMAGE_NAME}:${IMAGE_TAG} ${FULL_IMAGE} || true"
             }
         }
     }
