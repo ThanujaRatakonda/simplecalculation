@@ -7,6 +7,7 @@ pipeline {
         HARBOR_URL = "10.131.103.92:8090"
         HARBOR_PROJECT = "simplecalculation"
         FULL_IMAGE = "${HARBOR_URL}/${HARBOR_PROJECT}/${IMAGE_NAME}:${IMAGE_TAG}"
+        TRIVY_TEMPLATE_PATH = "/opt/trivy/junit.tpl" // Make sure this file exists
     }
 
     stages {
@@ -24,13 +25,21 @@ pipeline {
 
         stage('Trivy Scan') {
             steps {
-                sh """
-                    trivy image ${IMAGE_NAME}:${IMAGE_TAG} \
-                    --severity CRITICAL,HIGH \
-                    --format table \
-                    --output trivy-report.txt
-                """
-                archiveArtifacts artifacts: 'trivy-report.txt', fingerprint: true
+                script {
+                    sh """
+                        trivy image ${IMAGE_NAME}:${IMAGE_TAG} \
+                        --severity CRITICAL,HIGH \
+                        --format template \
+                        --template "@${TRIVY_TEMPLATE_PATH}" \
+                        --output trivy-report.xml
+                    """
+                }
+            }
+        }
+
+        stage('Publish Trivy Report') {
+            steps {
+                junit 'trivy-report.xml'
             }
         }
 
