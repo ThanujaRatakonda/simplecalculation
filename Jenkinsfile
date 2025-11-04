@@ -2,10 +2,11 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "smartcalc"
-        HARBOR_URL = "10.131.103.92:8090"
-        HARBOR_PROJECT = "simplecalculation"
-        FULL_IMAGE = "${HARBOR_URL}/${HARBOR_PROJECT}/${IMAGE_NAME}:latest"
+        IMAGE_NAME = "simplecalculation"
+        IMAGE_TAG = "latest"
+        REGISTRY = "10.131.103.92:8090"
+        PROJECT = "simplecalculation"
+        FULL_IMAGE = "${REGISTRY}/${PROJECT}/${IMAGE_NAME}:${IMAGE_TAG}"
     }
 
     stages {
@@ -17,14 +18,14 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t ${IMAGE_NAME} .'
+                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
             }
         }
 
-        stage('Trivy Scan') {
+        stage('Scan with Trivy') {
             steps {
                 sh """
-                    trivy image ${IMAGE_NAME} \
+                    trivy image ${IMAGE_NAME}:${IMAGE_TAG} \
                     --format table \
                     --output trivy-report.txt || echo 'Trivy scan failed'
                 """
@@ -32,13 +33,20 @@ pipeline {
             }
         }
 
+        stage('Login to Harbor') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'harbor-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                    sh "docker login ${REGISTRY} -u $USER -p $PASS"
+                }
+            }
+        }
+
         stage('Push to Harbor') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'harbor-creds', usernameVariable: 'HARBOR_USER', passwordVariable: 'HARBOR_PASS')]) {
-                    sh 'docker login ${HARBOR_URL} -u $HARBOR_USER -p $HARBOR_PASS'
-                    sh 'docker tag ${IMAGE_NAME} ${FULL_IMAGE}'
-                    sh 'docker push ${FULL_IMAGE}'
-                }
+                sh """
+                    docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${FULL_IMAGE}
+                    docker push ${FULL_IMAGE}
+                """
             }
         }
     }
