@@ -32,21 +32,6 @@ pipeline {
             }
         }
 
-        stage('Publish Trivy Report') {
-            steps {
-                sh 'echo "<html><body><pre>" > trivy-report.html'
-                sh 'cat trivy-report.txt >> trivy-report.html'
-                sh 'echo "</pre></body></html>" >> trivy-report.html'
-                script {
-                    publishHTML(target: [
-                        reportDir: '.',
-                        reportFiles: 'trivy-report.html',
-                        reportName: 'Trivy Vulnerability Report'
-                    ])
-                }
-            }
-        }
-
         stage('Push to Harbor') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'harbor-creds', usernameVariable: 'HARBOR_USER', passwordVariable: 'HARBOR_PASS')]) {
