@@ -7,7 +7,6 @@ pipeline {
         HARBOR_URL = "10.131.103.92:8090"
         HARBOR_PROJECT = "simplecalculation"
         FULL_IMAGE = "${HARBOR_URL}/${HARBOR_PROJECT}/${IMAGE_NAME}:${IMAGE_TAG}"
-        TRIVY_TEMPLATE_PATH = "/home/ThanujaRatakonda/trivy-templates/junit.tpl" // Make sure Jenkins can read this
     }
 
     stages {
@@ -23,13 +22,23 @@ pipeline {
             }
         }
 
+        stage('Prepare Trivy Template') {
+            steps {
+                // Copy the template into Jenkins workspace so Jenkins can access it
+                sh """
+                    cp /home/ThanujaRatakonda/trivy-templates/junit.tpl ./junit.tpl
+                    chmod 644 ./junit.tpl
+                """
+            }
+        }
+
         stage('Trivy Scan') {
             steps {
                 sh """
                     trivy image ${IMAGE_NAME}:${IMAGE_TAG} \
                     --severity CRITICAL,HIGH \
                     --format template \
-                    --template "@${TRIVY_TEMPLATE_PATH}" \
+                    --template "@junit.tpl" \
                     --output trivy-report.xml
                 """
             }
