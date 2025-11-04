@@ -24,13 +24,22 @@ pipeline {
 
         stage('Trivy Scan') {
             steps {
-                sh """
-                    trivy image ${IMAGE_NAME}:${IMAGE_TAG} \
-                    --severity CRITICAL,HIGH \
-                    --format table \
-                    --output trivy-report.txt
-                """
-                archiveArtifacts artifacts: 'trivy-report.txt', fingerprint: true
+                script {
+                    // Run Trivy scan and generate JUnit XML report
+                    sh """
+                        trivy image ${IMAGE_NAME}:${IMAGE_TAG} \
+                        --severity CRITICAL,HIGH \
+                        --format template \
+                        --template "@contrib/junit.tpl" \
+                        --output trivy-report.xml
+                    """
+                }
+            }
+        }
+
+        stage('Publish Trivy Report') {
+            steps {
+                junit 'trivy-report.xml'
             }
         }
 
