@@ -7,7 +7,7 @@ pipeline {
         HARBOR_URL = "10.131.103.92:8090"
         HARBOR_PROJECT = "simplecalculation"
         FULL_IMAGE = "${HARBOR_URL}/${HARBOR_PROJECT}/${IMAGE_NAME}:${IMAGE_TAG}"
-        TRIVY_TEMPLATE_PATH = "/home/ThanujaRatakonda/trivy-templates/junit.tpl" // Make sure this file exists
+        TRIVY_TEMPLATE_PATH = "/home/ThanujaRatakonda/trivy-templates/junit.tpl" // Make sure Jenkins can read this
     }
 
     stages {
@@ -25,15 +25,13 @@ pipeline {
 
         stage('Trivy Scan') {
             steps {
-                script {
-                    sh """
-                        trivy image ${IMAGE_NAME}:${IMAGE_TAG} \
-                        --severity CRITICAL,HIGH \
-                        --format template \
-                        --template "@${TRIVY_TEMPLATE_PATH}" \
-                        --output trivy-report.xml
-                    """
-                }
+                sh """
+                    trivy image ${IMAGE_NAME}:${IMAGE_TAG} \
+                    --severity CRITICAL,HIGH \
+                    --format template \
+                    --template "@${TRIVY_TEMPLATE_PATH}" \
+                    --output trivy-report.xml
+                """
             }
         }
 
