@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "simplecalculation"
+        IMAGE_NAME = "smartcalc"
         HARBOR_URL = "10.131.103.92:8090"
-        HARBOR_PROJECT = "harbor-login"
+        HARBOR_PROJECT = "simplecalculation"
         FULL_IMAGE = "${HARBOR_URL}/${HARBOR_PROJECT}/${IMAGE_NAME}:latest"
     }
 
