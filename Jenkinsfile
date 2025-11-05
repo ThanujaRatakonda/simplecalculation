@@ -44,7 +44,7 @@ pipeline {
                 """
          // Clean BOM and create a cleaned version of the report
                 sh """
-                    cat ${env.TRIVY_OUTPUT} | sed 's/^\xef\xbb\xbf//g' > clean-trivy-output.xml
+                  cat ${env.TRIVY_OUTPUT} | sed 's/^\\xef\\xbb\\xbf//g' > clean-trivy-output.xml
                 """
 
                 // Debug: Check the cleaned file's contents
