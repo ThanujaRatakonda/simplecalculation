@@ -1,5 +1,5 @@
 pipeline {
-    // Define the agent that will run the pipeline. 
+    // Define the agent that will run the pipeline.
     agent any
 
     // Environment variables for the pipeline, making it easier to manage the image details and credentials.
@@ -51,6 +51,13 @@ pipeline {
                     """, returnStdout: true).trim()
 
                     echo "Vulnerabilities Found: ${vulnCount}"
+
+                    // If vulnerabilities are found, fail the pipeline.
+                    if (vulnCount.toInteger() > 0) {
+                        error("Vulnerabilities count exceeded threshold. Pipeline failed!")
+                    }
+                }
+                
                 // Archive the generated JSON report for later inspection.
                 archiveArtifacts artifacts: "${TRIVY_OUTPUT_JSON}", fingerprint: true
             }
@@ -79,5 +86,4 @@ pipeline {
         }
     }
 }
-
 
