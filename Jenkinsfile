@@ -49,8 +49,6 @@ pipeline {
         //stage:5
         stage('publish junit report'){
             steps{
-                sh """
-                python3 -m pip install trivy-json-to-junit
                 junit '**/trivy-report.xml'
             }
         }
