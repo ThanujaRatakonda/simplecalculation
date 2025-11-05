@@ -11,6 +11,7 @@ pipeline {
         HARBOR_PROJECT = "simplecalculation"     // Project name in Harbor registry.
         FULL_IMAGE = "${HARBOR_URL}/${HARBOR_PROJECT}/${IMAGE_NAME}:${IMAGE_TAG}" // Full image path with tag.
         TRIVY_REPORT = "trivy-report.xml"
+        JUNIT_REPORT = "trivy-report.xml"
     }
 
     stages {
@@ -38,6 +39,7 @@ pipeline {
                     trivy image ${IMAGE_NAME}:${IMAGE_TAG} \
                     --severity CRITICAL,HIGH \
                     --format template \
+                    --template "@contrib/junit.tpl"
                     --output ${env.TRIVY_REPORT}
                 """
                 // Archive the generated Trivy report for later inspection.
@@ -47,6 +49,8 @@ pipeline {
         //stage:5
         stage('publish junit report'){
             steps{
+                sh """
+                python3 -m pip install trivy-json-to-junit
                 junit '**/trivy-report.xml'
             }
         }
