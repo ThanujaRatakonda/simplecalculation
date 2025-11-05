@@ -37,6 +37,9 @@ pipeline {
                     --format json \
                     -o ${TRIVY_OUTPUT_JSON}
                 """
+                
+                // Print the Trivy output to inspect its structure.
+                sh "cat ${TRIVY_OUTPUT_JSON}"
 
                 // Check if jq is installed, if not, exit with an error.
                 script {
@@ -47,7 +50,7 @@ pipeline {
 
                     // Use jq to parse the Trivy JSON output and count vulnerabilities.
                     def vulnCount = sh(script: """
-                        jq '[.[] | .Vulnerabilities[] | select(.Severity == "CRITICAL" or .Severity == "HIGH")] | length' ${TRIVY_OUTPUT_JSON}
+                        jq '[.Results[].Vulnerabilities[] | select(.Severity == "CRITICAL" or .Severity == "HIGH")] | length' ${TRIVY_OUTPUT_JSON}
                     """, returnStdout: true).trim()
 
                     echo "Vulnerabilities Found: ${vulnCount}"
