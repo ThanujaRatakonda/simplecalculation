@@ -40,7 +40,7 @@ pipeline {
                     --severity CRITICAL,HIGH \
                     --format template \
                     --template "/home/ThanujaRatakonda/trivy-templates/junit.tpl"
-                    --output ${env.TRIVY_OUTPUT}
+                    -o ${env.TRIVY_OUTPUT}
                 """
                 // Archive the generated Trivy report for later inspection.
                 archiveArtifacts artifacts: 'trivy-report.txt', fingerprint: true
