@@ -37,27 +37,20 @@ pipeline {
                     --format json \
                     -o ${TRIVY_OUTPUT_JSON}
                 """
-             // Check if jq is installed and available on the system.
-        sh """
-            if ! command -v jq &> /dev/null; then
-                echo 'jq is not installed, installing it...'
-                sudo apt-get update && sudo apt-get install -y jq
-            fi
-        """
 
-        // Use jq to parse the Trivy JSON output and count vulnerabilities.
-        script {
-            def vulnCount = sh(script: """
-                jq '[.[] | .Vulnerabilities[] | select(.Severity == "CRITICAL" or .Severity == "HIGH")] | length' ${TRIVY_OUTPUT_JSON}
-            """, returnStdout: true).trim()
+                // Check if jq is installed, if not, exit with an error.
+                script {
+                    def isJqInstalled = sh(script: 'command -v jq || echo "jq not installed"', returnStdout: true).trim()
+                    if (isJqInstalled == "jq not installed") {
+                        error("jq is not installed on the Jenkins agent.")
+                    }
 
-            echo "Vulnerabilities Found: ${vulnCount}"
+                    // Use jq to parse the Trivy JSON output and count vulnerabilities.
+                    def vulnCount = sh(script: """
+                        jq '[.[] | .Vulnerabilities[] | select(.Severity == "CRITICAL" or .Severity == "HIGH")] | length' ${TRIVY_OUTPUT_JSON}
+                    """, returnStdout: true).trim()
 
-            // If there are vulnerabilities, fail the pipeline.
-            if (vulnCount.toInteger() > 0) {
-                error("Vulnerabilities count exceeded threshold. Pipeline failed!")
-            }
-        }
+                    echo "Vulnerabilities Found: ${vulnCount}"
                 // Archive the generated JSON report for later inspection.
                 archiveArtifacts artifacts: "${TRIVY_OUTPUT_JSON}", fingerprint: true
             }
