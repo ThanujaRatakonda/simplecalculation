@@ -56,8 +56,7 @@ pipeline {
         //stage:5
         stage('publish junit report'){
             steps{
-                 junit 'clean-trivy-output.xml'  // Use the cleaned file
-               // junit '**/trivy-output.xml'
+                 junit '**/trivy-output.xml'
             }
         }
 
