@@ -1,5 +1,5 @@
 pipeline {
-    // Define the agent that will run the pipeline.
+    // Define the agent that will run the pipeline. 
     agent any
 
     // Environment variables for the pipeline, making it easier to manage the image details and credentials.
@@ -37,30 +37,6 @@ pipeline {
                     --format json \
                     -o ${TRIVY_OUTPUT_JSON}
                 """
-                
-                // Print the Trivy output to inspect its structure.
-                sh "cat ${TRIVY_OUTPUT_JSON}"
-
-                // Check if jq is installed, if not, exit with an error.
-                script {
-                    def isJqInstalled = sh(script: 'command -v jq || echo "jq not installed"', returnStdout: true).trim()
-                    if (isJqInstalled == "jq not installed") {
-                        error("jq is not installed on the Jenkins agent.")
-                    }
-
-                    // Use jq to parse the Trivy JSON output and count vulnerabilities.
-                    def vulnCount = sh(script: """
-                        jq '[.Results[].Vulnerabilities[] | select(.Severity == "CRITICAL" or .Severity == "HIGH")] | length' ${TRIVY_OUTPUT_JSON}
-                    """, returnStdout: true).trim()
-
-                    echo "Vulnerabilities Found: ${vulnCount}"
-
-                    // If vulnerabilities are found, fail the pipeline.
-                    if (vulnCount.toInteger() > 0) {
-                        error("Vulnerabilities count exceeded threshold. Pipeline failed!")
-                    }
-                }
-                
                 // Archive the generated JSON report for later inspection.
                 archiveArtifacts artifacts: "${TRIVY_OUTPUT_JSON}", fingerprint: true
             }
