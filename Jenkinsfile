@@ -37,7 +37,7 @@ pipeline {
                 sh """
                     trivy image ${IMAGE_NAME}:${IMAGE_TAG} \
                     --severity CRITICAL,HIGH \
-                    --format junit \
+                    --format templet \
                     --output ${env.TRIVY_REPORT}
                 """
                 // Archive the generated Trivy report for later inspection.
