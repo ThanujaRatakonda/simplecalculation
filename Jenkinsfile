@@ -37,16 +37,16 @@ pipeline {
                     --format json \
                     -o ${TRIVY_OUTPUT_JSON}
                 """
-                // Parse the Trivy output JSON to count the vulnerabilities.
+               // Use jq to parse the Trivy JSON output and count vulnerabilities.
         script {
-            def jsonOutput = readJSON file: "${TRIVY_OUTPUT_JSON}"
-            def criticalAndHighVulns = jsonOutput.findAll { it.Vulnerabilities.find { vuln -> vuln.Severity == 'CRITICAL' || vuln.Severity == 'HIGH' } }
-            def vulnCount = criticalAndHighVulns.size()
+            def vulnCount = sh(script: """
+                jq '[.[] | .Vulnerabilities[] | select(.Severity == "CRITICAL" or .Severity == "HIGH")] | length' ${TRIVY_OUTPUT_JSON}
+            """, returnStdout: true).trim()
 
             echo "Vulnerabilities Found: ${vulnCount}"
 
             // If there are vulnerabilities, fail the pipeline.
-            if (vulnCount > 0) {
+            if (vulnCount.toInteger() > 0) {
                 error("Vulnerabilities count exceeded threshold. Pipeline failed!")
             }
         }
