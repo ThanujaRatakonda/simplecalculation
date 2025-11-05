@@ -42,13 +42,11 @@ pipeline {
                     --template "/home/ThanujaRatakonda/trivy-templates/junit.tpl" \
                     -o ${env.TRIVY_OUTPUT}
                 """
-                // Remove BOM (if present) and create a cleaned version of the report
-        sh """
-            cat ${env.TRIVY_OUTPUT} | sed 's/^\\xef\\xbb\\xbf//g' > clean-trivy-output.xml
-        """
-
-        // Debug: Check the cleaned file's contents
-        sh "cat clean-trivy-output.xml"
+               
+        // Clean BOM and create a cleaned version of the report
+                sh """
+                    cat ${env.TRIVY_OUTPUT} | sed 's/^\xef\xbb\xbf//g' > clean-trivy-output.xml
+                """
                 // Archive the generated Trivy report for later inspection.
                 archiveArtifacts artifacts: 'trivy-report.txt', fingerprint: true
             }
