@@ -10,7 +10,7 @@ pipeline {
         HARBOR_URL = "10.131.103.92:8090"        // URL for the Harbor registry.
         HARBOR_PROJECT = "simplecalculation"     // Project name in Harbor registry.
         FULL_IMAGE = "${HARBOR_URL}/${HARBOR_PROJECT}/${IMAGE_NAME}:${IMAGE_TAG}" // Full image path with tag.
-        TRIVY_REPORT = "trivy-output.xml"
+        TRIVY_OUTPUT = "trivy-output.xml"
         JUNIT_REPORT = "trivy-report.xml"
     }
 
@@ -40,7 +40,7 @@ pipeline {
                     --severity CRITICAL,HIGH \
                     --format template \
                     --template "@junit.tpl"
-                    --output ${env.TRIVY_REPORT}
+                    --output ${env.TRIVY_OUTPUT}
                 """
                 // Archive the generated Trivy report for later inspection.
                 archiveArtifacts artifacts: 'trivy-report.txt', fingerprint: true
