@@ -41,21 +41,22 @@ pipeline {
                 archiveArtifacts artifacts: "${TRIVY_OUTPUT_JSON}", fingerprint: true
             }
         }
-             stage('Check for Vulnerabilities') {
-    steps {
-        script {
-            // Corrected jq query with a check for vulnerabilities
-            def vulnerabilities = sh(script: """
-                jq 'if .Vulnerabilities then .Vulnerabilities | map(select(.Severity == "CRITICAL" or .Severity == "HIGH")) | length else 0 end' ${TRIVY_OUTPUT_JSON}
-            """, returnStdout: true).trim()
+            stage('Check for Vulnerabilities') {
+            steps {
+                script {
+                    // Corrected jq query to count vulnerabilities with CRITICAL/HIGH severity
+                    def vulnerabilities = sh(script: """
+                        jq '[.Results[].Packages[] | select(.Severity == "CRITICAL" or .Severity == "HIGH")] | length' ${TRIVY_OUTPUT_JSON}
+                    """, returnStdout: true).trim()
 
-            // If vulnerabilities count is greater than 0, fail the pipeline
-            if (vulnerabilities.toInteger() > 0) {
-                error "Pipeline failed due to detected CRITICAL/HIGH vulnerabilities!"
+                    // Check if any vulnerabilities were found
+                    if (vulnerabilities.toInteger() > 0) {
+                        error "Pipeline failed due to detected CRITICAL/HIGH vulnerabilities!"
+                    }
+                }
             }
         }
-    }
-}
+
 
 
         // Stage 4: Push to Harbor - Push the successfully built image to the Harbor registry.
