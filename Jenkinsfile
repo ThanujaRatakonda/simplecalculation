@@ -39,7 +39,7 @@ pipeline {
                     trivy image ${IMAGE_NAME}:${IMAGE_TAG} \
                     --severity CRITICAL,HIGH \
                     --format template \
-                    --template "@contrib/junit.tpl"
+                    --template "@junit.tpl"
                     --output ${env.TRIVY_REPORT}
                 """
                 // Archive the generated Trivy report for later inspection.
