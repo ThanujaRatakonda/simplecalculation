@@ -10,6 +10,7 @@ pipeline {
         HARBOR_URL = "10.131.103.92:8090"        // URL for the Harbor registry.
         HARBOR_PROJECT = "simplecalculation"     // Project name in Harbor registry.
         FULL_IMAGE = "${HARBOR_URL}/${HARBOR_PROJECT}/${IMAGE_NAME}:${IMAGE_TAG}" // Full image path with tag.
+        TRIVY_REPORT = "trivy-report.xml"
     }
 
     stages {
@@ -36,11 +37,17 @@ pipeline {
                 sh """
                     trivy image ${IMAGE_NAME}:${IMAGE_TAG} \
                     --severity CRITICAL,HIGH \
-                    --format table \
-                    --output trivy-report.txt
+                    --format junit \
+                    --output ${env.TRIVY_REPORT}
                 """
                 // Archive the generated Trivy report for later inspection.
                 archiveArtifacts artifacts: 'trivy-report.txt', fingerprint: true
+            }
+        }
+        //stage:5
+        stage('publish junit report'){
+            steps{
+                junit '**/trivy-report.xml'
             }
         }
 
