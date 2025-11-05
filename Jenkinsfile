@@ -37,7 +37,15 @@ pipeline {
                     --format json \
                     -o ${TRIVY_OUTPUT_JSON}
                 """
-               // Use jq to parse the Trivy JSON output and count vulnerabilities.
+             // Check if jq is installed and available on the system.
+        sh """
+            if ! command -v jq &> /dev/null; then
+                echo 'jq is not installed, installing it...'
+                sudo apt-get update && sudo apt-get install -y jq
+            fi
+        """
+
+        // Use jq to parse the Trivy JSON output and count vulnerabilities.
         script {
             def vulnCount = sh(script: """
                 jq '[.[] | .Vulnerabilities[] | select(.Severity == "CRITICAL" or .Severity == "HIGH")] | length' ${TRIVY_OUTPUT_JSON}
@@ -50,7 +58,6 @@ pipeline {
                 error("Vulnerabilities count exceeded threshold. Pipeline failed!")
             }
         }
-
                 // Archive the generated JSON report for later inspection.
                 archiveArtifacts artifacts: "${TRIVY_OUTPUT_JSON}", fingerprint: true
             }
