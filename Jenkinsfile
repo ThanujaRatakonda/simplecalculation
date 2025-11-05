@@ -49,7 +49,7 @@ pipeline {
         //stage:5
         stage('publish junit report'){
             steps{
-                junit '**/trivy-report.xml'
+                junit '**/trivy-output.xml'
             }
         }
 
