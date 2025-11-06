@@ -26,6 +26,12 @@ pipeline {
                 sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
             }
         }
+           // Stage 5: Run Docker Container - Run the Docker container with port mapping.
+    stage('Run Docker Container') {
+        steps {
+            sh "docker run -d -p 5000:5000 ${IMAGE_NAME}:${IMAGE_TAG}"
+        }
+    }
 
         // Stage 3: Trivy Scan - Perform a vulnerability scan on the built Docker image using Trivy.
         stage('Trivy Scan') {
